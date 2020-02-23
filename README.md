@@ -8,6 +8,7 @@ Simple and fast 3D rendering engine for Game Maker. Written in OpenGL
 Copyright (c) 2005-2020. Lode Vandevenne
 
 # Realm Renderer License
+MIT License
 Copyright (c) 2020. Banebyte
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
