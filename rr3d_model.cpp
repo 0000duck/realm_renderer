@@ -11,9 +11,9 @@ Model::~Model() {  }
 void Model::Draw(Camera camera) {
 	// shader
 	glUseProgram(data->program);
-	GLuint M_location = glGetUniformLocation(data->program, "M");
-	GLuint V_location = glGetUniformLocation(data->program, "V");
-	GLuint P_location = glGetUniformLocation(data->program, "P");
+	GLuint M_location = glGetUniformLocation(data->program, "u_M");
+	GLuint V_location = glGetUniformLocation(data->program, "u_V");
+	GLuint P_location = glGetUniformLocation(data->program, "u_P");
 	glm::mat4 M_translate = glm::translate(data->translation);
 	glm::mat4 M_rotateX = glm::rotate(data->rotation[0], glm::vec3(1.0, 0.0, 0.0));
 	glm::mat4 M_rotateY = glm::rotate(data->rotation[1], glm::vec3(0.0, 1.0, 0.0));
