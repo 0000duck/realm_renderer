@@ -11,9 +11,9 @@ Terrain::~Terrain() { }
 void Terrain::Draw(Camera camera) {
 	// shader
 	glUseProgram(data->program);
-	GLuint M_location = glGetUniformLocation(data->program, "M");
-	GLuint V_location = glGetUniformLocation(data->program, "V");
-	GLuint P_location = glGetUniformLocation(data->program, "P");
+	GLuint M_location = glGetUniformLocation(data->program, "u_M");
+	GLuint V_location = glGetUniformLocation(data->program, "u_V");
+	GLuint P_location = glGetUniformLocation(data->program, "u_P");
 	glm::mat4 M = glm::translate(data->translation);
 	glUniformMatrix4fv(M_location, 1, GL_FALSE, &M[0][0]);
 	glUniformMatrix4fv(V_location, 1, GL_FALSE, &camera.getViewMatrix()[0][0]);
