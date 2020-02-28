@@ -27,6 +27,10 @@ RRENDER_API double RRender_VectorDot(double, double);
 RRENDER_API double RRender_VectorCross(double, double);
 RRENDER_API double RRender_VectorDelete(double);
 
+//* COLLISION *//
+RRENDER_API double RRender_CollisionRayBillboards(double);
+RRENDER_API double RRender_CollisionRayModels(double);
+
 //* CAMERA *//
 RRENDER_API double RRender_CameraCreate(double, double, double, double);
 RRENDER_API double RRender_CameraSetPitch(double, double);
@@ -71,6 +75,8 @@ RRENDER_API double RRender_TextDelete(double);
 RRENDER_API double RRender_TextureCreate(char* fn, double, double);
 RRENDER_API double RRender_TextureHide(double, double);
 RRENDER_API double RRender_TextureSetRegion(double, double, double, double);
+RRENDER_API double RRender_TextureGetWidth(double);
+RRENDER_API double RRender_TextureGetHeight(double);
 RRENDER_API double RRender_TextureFreeMemory(double);
 RRENDER_API double RRender_TextureSave(double, char*);
 RRENDER_API double RRender_TextureDelete(double);
