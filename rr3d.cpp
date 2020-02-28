@@ -776,6 +776,25 @@ RRENDER_API double RRender_TerrainDataSetParams(double d, double gs, double gc) 
 
 }
 
+RRENDER_API double RRender_TerrainDataGetYGrid(double d, double x, double y) {
+	
+	TerrainData* data = (TerrainData*)(ULONG)d;
+
+	if (data->positions == NULL || data->normals == NULL) { return 0; }
+
+	unsigned gx = (unsigned)x;
+	unsigned gy = (unsigned)y;
+	unsigned bptr = 0;
+
+	if (gy == 0) {
+		bptr = (gx * 6) + 3;
+	} else {
+		bptr = ((data->gc + 1) * (gy - 1) * 6) + (gx * 6);
+	}
+	
+	return data->positions[bptr + 1];
+}
+
 RRENDER_API double RRender_TerrainDataAddY(double d, double x, double y, double v) {
 
 	TerrainData* data = (TerrainData*)(ULONG)d;
