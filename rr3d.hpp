@@ -94,6 +94,7 @@ RRENDER_API double RRender_TerrainDataSetTexture(double, double);
 RRENDER_API double RRender_TerrainDataSetPosition(double, double, double, double);
 RRENDER_API double RRender_TerrainDataSetShader(double, double);
 RRENDER_API double RRender_TerrainDataSetParams(double, double, double);
+RRENDER_API double RRender_TerrainDataGetYGrid(double, double, double);
 RRENDER_API double RRender_TerrainDataAddY(double, double, double, double);
 RRENDER_API double RRender_TerrainDataGetPosition(double, double);
 RRENDER_API double RRender_TerrainDataGetShader(double);
