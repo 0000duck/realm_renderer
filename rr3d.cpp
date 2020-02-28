@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <windows.h>
 
+#include <gtx/transform.hpp>
 #include "lodepng/lodepng.hpp"
 
 #include "rr3d.hpp"
@@ -30,6 +31,30 @@ unsigned* RR3D_screen_buffer_pos = NULL;
 unsigned int RR3D_screen_buffer_cnt = 0;
 
 //* NOT GM FUNCTIONS *//
+
+unsigned collision_raytriangle(glm::vec3 org, glm::vec3 dir, glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, float* t) {
+
+	glm::vec3 p0p1 = p1 - p0;
+	glm::vec3 p0p2 = p2 - p0;
+	glm::vec3 pvec = glm::cross(dir, p0p2);
+	float det = glm::dot(p0p1, pvec);
+
+	if (det < 0.001f) { return 0; }
+
+	float invDet = 1.0f / det;
+
+	glm::vec3 tvec = org - p0;
+	float u = glm::dot(tvec, pvec) * invDet;
+	if (u < 0 || u > 1) { return 0; }
+
+	glm::vec3 qvec = glm::cross(tvec, p0p1);
+	float v = glm::dot(dir, qvec) * invDet;
+	if (v < 0 || u + v > 1) { return 0; }
+
+	*t = glm::dot(p0p2, qvec) * invDet;
+	
+	return 1;
+}
 
 unsigned clamp(signed v, unsigned min, unsigned max) {
 
@@ -175,6 +200,103 @@ RRENDER_API double RRender_VectorDelete(double p) {
 	free(v1);
 
 	return RR_SUCCESS;
+}
+
+//* COLLISION *//
+
+RRENDER_API double RRender_CollisionRayBillboards(double cam) {
+
+	Camera* camera = (Camera*)(ULONG)cam;
+
+	for (int instance = 0; instance < RR3D_instance_buffer_cnt; ++instance) {
+
+		if (RR3D_instance_buffer_id[instance] == RR_ID_BILLBOARD) {
+
+			Billboard* billboard = (Billboard*)RR3D_instance_buffer[instance];
+
+			RR3DVertex3* buffer = (RR3DVertex3*)malloc(sizeof(RR3DVertex3) * 4);
+			
+			glm::mat4 M_translate = glm::translate(billboard->getData()->translation);
+			glm::mat4 M_rotateX = glm::rotate(billboard->getData()->rotation[0], glm::vec3(1.0, 0.0, 0.0));
+			glm::mat4 M_rotateY = glm::rotate(billboard->getData()->rotation[1], glm::vec3(0.0, 1.0, 0.0));
+			glm::mat4 M_rotateZ = glm::rotate(billboard->getData()->rotation[2], glm::vec3(0.0, 0.0, 1.0));
+			glm::mat4 M_rotate = M_rotateX * M_rotateY * M_rotateZ;
+			glm::mat4 M_scale = glm::scale(billboard->getData()->scale);
+			glm::mat4 M = M_translate * M_rotate * M_scale;
+			glm::mat4 MV = M * camera->getViewMatrix();
+
+			glm::vec3 pos = M * glm::vec4(0.0, 0.0, 0.0, 1.0);
+			glm::vec3 right = glm::vec3(MV[0][0], MV[1][0], MV[2][0]);
+			glm::vec3 up = glm::vec3(MV[0][1], MV[1][1], MV[2][1]);
+
+			buffer[0].pos = pos + -right - up;
+			buffer[1].pos = pos + -right + up;
+			buffer[2].pos = pos + right - up;
+			buffer[3].pos = pos + right + up;
+
+			// collision detection
+			glm::vec3 org = glm::vec3(*camera->getTranslationX(), *camera->getTranslationY(), *camera->getTranslationZ());
+			glm::vec3 dir = glm::vec3(camera->getViewMatrix()[0][2], camera->getViewMatrix()[1][2], camera->getViewMatrix()[2][2]);
+			float t = 0;
+
+			if (collision_raytriangle(org, dir, buffer[0].pos, buffer[1].pos, buffer[2].pos, &t)) {
+				return (double)(ULONG)billboard;
+			}
+			if (collision_raytriangle(org, dir, buffer[1].pos, buffer[3].pos, buffer[2].pos, &t)) {
+				return (double)(ULONG)billboard;
+			}
+			
+		}
+
+	}
+
+	return 0;
+
+}
+
+RRENDER_API double RRender_CollisionRayModels(double cam) {
+
+	Camera* camera = (Camera*)(ULONG)cam;
+
+	for (int instance = 0; instance < RR3D_instance_buffer_cnt; ++instance) {
+
+		if (RR3D_instance_buffer_id[instance] == RR_ID_MODEL) {
+
+			Model* model = (Model*)RR3D_instance_buffer[instance];
+
+			unsigned points = model->getData()->vertices_cnt;
+			unsigned triangles = points / 3;
+
+			RR3DVertex* buffer = model->getData()->vertices;
+
+			glm::mat4 M_translate = glm::translate(model->getData()->translation);
+			glm::mat4 M_rotateX = glm::rotate(model->getData()->rotation[0], glm::vec3(1.0, 0.0, 0.0));
+			glm::mat4 M_rotateY = glm::rotate(model->getData()->rotation[1], glm::vec3(0.0, 1.0, 0.0));
+			glm::mat4 M_rotateZ = glm::rotate(model->getData()->rotation[2], glm::vec3(0.0, 0.0, 1.0));
+			glm::mat4 M_rotate = M_rotateX * M_rotateY * M_rotateZ;
+			glm::mat4 M_scale = glm::scale(model->getData()->scale);
+			glm::mat4 M = M_translate * M_rotate * M_scale;
+
+			// collision detection
+			for (int i = 0, ptr = 0; i < triangles; ++i, ptr += 3) {
+
+				glm::vec3 org = glm::vec3(*camera->getTranslationX(), *camera->getTranslationY(), *camera->getTranslationZ());
+				glm::vec3 dir = glm::vec3(camera->getViewMatrix()[0][2], camera->getViewMatrix()[1][2], camera->getViewMatrix()[2][2]);
+				glm::vec3 p0 = M * glm::vec4(buffer[ptr].pos, 1.0);
+				glm::vec3 p1 = M * glm::vec4(buffer[ptr + 1].pos, 1.0);
+				glm::vec3 p2 = M * glm::vec4(buffer[ptr + 2].pos, 1.0);
+				float t = 0;
+
+				if (collision_raytriangle(org, dir, p0, p1, p2, &t)) {
+					return (double)(ULONG)model;
+				}
+
+			}
+		}
+
+	}
+
+	return 0;
 }
 
 //* CAMERA *//
@@ -565,6 +687,18 @@ RRENDER_API double RRender_TextureSetRegion(double t1, double t2, double x, doub
 	}
 
 	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_TextureGetWidth(double t) {
+
+	Texture* data = (Texture*)(ULONG)t;
+	return (double)data->getWidth();
+}
+
+RRENDER_API double RRender_TextureGetHeight(double t) {
+
+	Texture* data = (Texture*)(ULONG)t;
+	return (double)data->getWidth();
 }
 
 RRENDER_API double RRender_TextureFreeMemory(double t) {
