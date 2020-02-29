@@ -83,11 +83,13 @@ RRENDER_API double RRender_TextureDelete(double);
 
 //* BILLBOARD DATA *//
 RRENDER_API double RRender_BillboardDataCreate();
+RRENDER_API double RRender_BillboardDataSetMeta(double, double, double);
 RRENDER_API double RRender_BillboardDataSetTexture(double, double);
 RRENDER_API double RRender_BillboardDataSetPosition(double, double, double, double);
 RRENDER_API double RRender_BillboardDataSetRotation(double, double, double, double);
 RRENDER_API double RRender_BillboardDataSetScale(double, double, double, double);
 RRENDER_API double RRender_BillboardDataSetShader(double, double);
+RRENDER_API double RRender_BillboardDataGetMeta(double, double);
 RRENDER_API double RRender_BillboardDataGetPosition(double, double);
 RRENDER_API double RRender_BillboardDataGetRotation(double, double);
 RRENDER_API double RRender_BillboardDataGetScale(double, double);
@@ -96,10 +98,12 @@ RRENDER_API double RRender_BillboardDataDelete(double);
 
 //* TERRAIN DATA *//
 RRENDER_API double RRender_TerrainDataCreate();
+RRENDER_API double RRender_TerrainDataSetMeta(double, double, double);
 RRENDER_API double RRender_TerrainDataSetTexture(double, double);
 RRENDER_API double RRender_TerrainDataSetPosition(double, double, double, double);
 RRENDER_API double RRender_TerrainDataSetShader(double, double);
 RRENDER_API double RRender_TerrainDataSetParams(double, double, double);
+RRENDER_API double RRender_TerrainDataGetMeta(double, double);
 RRENDER_API double RRender_TerrainDataGetYGrid(double, double, double);
 RRENDER_API double RRender_TerrainDataAddY(double, double, double, double);
 RRENDER_API double RRender_TerrainDataGetPosition(double, double);
@@ -111,12 +115,14 @@ RRENDER_API double RRender_TerrainDataDelete(double);
 
 //* MODEL DATA *//
 RRENDER_API double RRender_ModelDataCreate();
+RRENDER_API double RRender_ModelDataSetMeta(double, double, double);
 RRENDER_API double RRender_ModelDataSetTexture(double, double);
 RRENDER_API double RRender_ModelDataSetPosition(double, double, double, double);
 RRENDER_API double RRender_ModelDataSetRotation(double, double, double, double);
 RRENDER_API double RRender_ModelDataSetScale(double, double, double, double);
 RRENDER_API double RRender_ModelDataSetShader(double, double);
 RRENDER_API double RRender_ModelDataSetColor(double, double);
+RRENDER_API double RRender_ModelDataGetMeta(double, double);
 RRENDER_API double RRender_ModelDataGetPosition(double, double);
 RRENDER_API double RRender_ModelDataGetRotation(double, double);
 RRENDER_API double RRender_ModelDataGetScale(double, double);
@@ -128,11 +134,13 @@ RRENDER_API double RRender_ModelDataDelete(double);
 
 //* PRIMITIVE DATA *//
 RRENDER_API double RRender_PrimitiveDataCreate();
+RRENDER_API double RRender_PrimitiveDataSetMeta(double, double, double);
 RRENDER_API double RRender_PrimitiveDataSetPosition(double, double, double, double);
 RRENDER_API double RRender_PrimitiveDataSetRotation(double, double, double, double);
 RRENDER_API double RRender_PrimitiveDataSetScale(double, double, double, double);
 RRENDER_API double RRender_PrimitiveDataSetShader(double, double);
 RRENDER_API double RRender_PrimitiveDataSetColor(double, double);
+RRENDER_API double RRender_PrimitiveDataGetMeta(double, double);
 RRENDER_API double RRender_PrimitiveDataGetPosition(double, double);
 RRENDER_API double RRender_PrimitiveDataGetRotation(double, double);
 RRENDER_API double RRender_PrimitiveDataGetScale(double, double);
@@ -144,21 +152,25 @@ RRENDER_API double RRender_PrimitiveDataDelete(double);
 
 //* BILLBOARD *//
 RRENDER_API double RRender_BillboardCreate(double);
+RRENDER_API double RRender_BillboardGetData(double);
 RRENDER_API double RRender_BillboardHide(double, double);
 RRENDER_API double RRender_BillboardDelete(double);
 
 //* TERRAIN *//
 RRENDER_API double RRender_TerrainCreate(double);
+RRENDER_API double RRender_TerrainGetData(double);
 RRENDER_API double RRender_TerrainHide(double, double);
 RRENDER_API double RRender_TerrainDelete(double);
 
 //* MODEL *//
 RRENDER_API double RRender_ModelCreate(double);
+RRENDER_API double RRender_ModelGetData(double);
 RRENDER_API double RRender_ModelHide(double, double);
 RRENDER_API double RRender_ModelDelete(double);
 
 //* PRIMITIVE *//
 RRENDER_API double RRender_PrimitiveCreate(double);
+RRENDER_API double RRender_PrimitiveGetData(double);
 RRENDER_API double RRender_PrimitiveHide(double, double);
 RRENDER_API double RRender_PrimitiveDelete(double);
 
