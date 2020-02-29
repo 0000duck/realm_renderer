@@ -1,10 +1,10 @@
-# Realm Renderer v1.0.1
+# Realm Renderer v1.0.2
 3D Engine for Game Maker
 
 # Description
 Simple and fast 3D rendering engine for Game Maker. Written in OpenGL
 
-# Versions
+# Version
 1.0.2
 - New function 'RRender_BillboardSetMeta'
 - New function 'RRender_BillboardGetMeta'
@@ -14,11 +14,6 @@ Simple and fast 3D rendering engine for Game Maker. Written in OpenGL
 - New function 'RRender_ModelGetMeta'
 - New function 'RRender_PrimitiveSetMeta'
 - New function 'RRender_PrimitiveGetMeta'
-1.0.1
-- New function 'RRender_CollisionBillboards'
-- New function 'RRender_CollisionModels'
-- New function 'RRender_TextureGetWidth'
-- New function 'RRender_TextureGetHeight'
 
 # Lodepng License
 Copyright (c) 2005-2020. Lode Vandevenne
