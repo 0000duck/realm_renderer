@@ -251,7 +251,6 @@ RRENDER_API double RRender_CollisionRayBillboards(double cam) {
 	}
 
 	return 0;
-
 }
 
 RRENDER_API double RRender_CollisionRayModels(double cam) {
@@ -738,8 +737,18 @@ RRENDER_API double RRender_BillboardDataCreate() {
 	BillboardData* data = (BillboardData*)malloc(sizeof(BillboardData));
 	data->program = 0;
 	data->texture = 0;
+	data->meta = (double*)malloc(180);
 
 	return (double)(ULONG)data;
+}
+
+RRENDER_API double RRender_BillboardDataSetMeta(double d, double index, double v) {
+
+	BillboardData* data = (BillboardData*)(ULONG)d;
+	unsigned i = (unsigned)index;
+	data->meta[i] = v;
+
+	return RR_SUCCESS;
 }
 
 RRENDER_API double RRender_BillboardDataSetTexture(double d, double t) {
@@ -781,6 +790,13 @@ RRENDER_API double RRender_BillboardDataSetShader(double d, double shader) {
 	data->program = (GLuint)shader;
 
 	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_BillboardDataGetMeta(double d, double v) {
+
+	BillboardData* data = (BillboardData*)(ULONG)d;
+	unsigned i = (unsigned)v;
+	return data->meta[i];
 }
 
 RRENDER_API double RRender_BillboardDataGetPosition(double d, double v) {
@@ -849,6 +865,7 @@ RRENDER_API double RRender_BillboardDataGetShader(double d) {
 RRENDER_API double RRender_BillboardDataDelete(double d) {
 
 	BillboardData* data = (BillboardData*)(ULONG)d;
+	free(data->meta);
 	free(data);
 
 	return RR_SUCCESS;
@@ -867,12 +884,22 @@ RRENDER_API double RRender_TerrainDataCreate() {
 	data->texture = 0;
 	data->gc = 0;
 	data->gs = 0;
+	data->meta = (double*)malloc(80);
 
 	glGenBuffers(1, &data->buff_positions);
 	glGenBuffers(1, &data->buff_normals);
 	glGenBuffers(1, &data->buff_uvs);
 
 	return (double)(ULONG)data;
+}
+
+RRENDER_API double RRender_TerrainDataSetMeta(double d, double index, double v) {
+
+	TerrainData* data = (TerrainData*)(ULONG)d;
+	unsigned i = (unsigned)index;
+	data->meta[i] = v;
+
+	return RR_SUCCESS;
 }
 
 RRENDER_API double RRender_TerrainDataSetTexture(double d, double t) {
@@ -908,6 +935,13 @@ RRENDER_API double RRender_TerrainDataSetParams(double d, double gs, double gc) 
 
 	return RR_SUCCESS;
 
+}
+
+RRENDER_API double RRender_TerrainDataGetMeta(double d, double v) {
+
+	TerrainData* data = (TerrainData*)(ULONG)d;
+	unsigned i = (unsigned)v;
+	return data->meta[i];
 }
 
 RRENDER_API double RRender_TerrainDataGetYGrid(double d, double x, double y) {
@@ -1232,6 +1266,7 @@ RRENDER_API double RRender_TerrainDataDelete(double d) {
 	glDeleteBuffers(1, &data->buff_positions);
 	glDeleteBuffers(1, &data->buff_normals);
 	glDeleteBuffers(1, &data->buff_uvs);
+	free(data->meta);
 	free(data->positions);
 	free(data->normals);
 	free(data->uvs);
@@ -1251,10 +1286,20 @@ RRENDER_API double RRender_ModelDataCreate() {
 	data->vertices = 0;
 	data->vertices_cnt = 0;
 	data->texture = 0;
+	data->meta = (double*)malloc(80);
 
 	glGenBuffers(1, &data->buff_vertices);
 
 	return (double)(ULONG)data;
+}
+
+RRENDER_API double RRender_ModelDataSetMeta(double d, double index, double v) {
+
+	ModelData* data = (ModelData*)(ULONG)d;
+	unsigned i = (unsigned)index;
+	data->meta[i] = v;
+
+	return RR_SUCCESS;
 }
 
 RRENDER_API double RRender_ModelDataSetTexture(double d, double t) {
@@ -1312,6 +1357,13 @@ RRENDER_API double RRender_ModelDataSetColor(double d, double col) {
 	}
 
 	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_ModelDataGetMeta(double d, double v) {
+
+	ModelData* data = (ModelData*)(ULONG)d;
+	unsigned i = (unsigned)v;
+	return data->meta[i];
 }
 
 RRENDER_API double RRender_ModelDataGetPosition(double d, double v) {
@@ -1432,6 +1484,7 @@ RRENDER_API double RRender_ModelDataDelete(double d) {
 	if (data->vertices != NULL) {
 		free(data->vertices);
 	}
+	free(data->meta);
 	free(data);
 
 	return RR_SUCCESS;
@@ -1447,10 +1500,20 @@ RRENDER_API double RRender_PrimitiveDataCreate() {
 	data->program = 0;
 	data->vertices = 0;
 	data->vertices_cnt = 0;
+	data->meta = (double*)malloc(80);
 
 	glGenBuffers(1, &data->buff_vertices);
 
 	return (double)(ULONG)data;
+}
+
+RRENDER_API double RRender_PrimitiveDataSetMeta(double d, double index, double v) {
+
+	PrimitiveData* data = (PrimitiveData*)(ULONG)d;
+	unsigned i = (unsigned)index;
+	data->meta[i] = v;
+	
+	return RR_SUCCESS;
 }
 
 RRENDER_API double RRender_PrimitiveDataSetPosition(double d, double x, double y, double z) {
@@ -1499,6 +1562,13 @@ RRENDER_API double RRender_PrimitiveDataSetColor(double d, double col) {
 	}
 
 	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_PrimitiveDataGetMeta(double d, double v) {
+
+	PrimitiveData* data = (PrimitiveData*)(ULONG)d;
+	unsigned i = (unsigned)v;
+	return data->meta[i];
 }
 
 RRENDER_API double RRender_PrimitiveDataGetPosition(double d, double v) {
@@ -1769,6 +1839,7 @@ RRENDER_API double RRender_PrimitiveDataDelete(double d) {
 	if (data->vertices != NULL) {
 		free(data->vertices);
 	}
+	free(data->meta);
 	free(data);
 
 	return RR_SUCCESS;
@@ -1782,6 +1853,12 @@ RRENDER_API double RRender_BillboardCreate(double dataptr) {
 	Billboard* terrain = new Billboard(data);
 
 	return (double)(ULONG)terrain;
+}
+
+RRENDER_API double RRender_BillboardGetData(double p) {
+
+	Billboard* billboard = (Billboard*)(ULONG)p;
+	return (double)(ULONG)billboard->getData();
 }
 
 RRENDER_API double RRender_BillboardHide(double p, double v) {
@@ -1810,6 +1887,12 @@ RRENDER_API double RRender_TerrainCreate(double dataptr) {
 	return (double)(ULONG)terrain;
 }
 
+RRENDER_API double RRender_TerrainGetData(double p) {
+
+	Terrain* terrain = (Terrain*)(ULONG)p;
+	return (double)(ULONG)terrain->getData();
+}
+
 RRENDER_API double RRender_TerrainHide(double p, double v) {
 
 	Terrain* terrain = (Terrain*)(ULONG)p;
@@ -1836,6 +1919,12 @@ RRENDER_API double RRender_ModelCreate(double dataptr) {
 	return (double)(ULONG)model;
 }
 
+RRENDER_API double RRender_ModelGetData(double p) {
+
+	Model* model = (Model*)(ULONG)p;
+	return (double)(ULONG)model->getData();
+}
+
 RRENDER_API double RRender_ModelHide(double p, double v) {
 
 	Model* model = (Model*)(ULONG)p;
@@ -1860,6 +1949,12 @@ RRENDER_API double RRender_PrimitiveCreate(double dataptr) {
 	Primitive* primitive = new Primitive(data);
 
 	return (double)(ULONG)primitive;
+}
+
+RRENDER_API double RRender_PrimitiveGetData(double p) {
+
+	Primitive* primitive = (Primitive*)(ULONG)p;
+	return (double)(ULONG)primitive->getData();
 }
 
 RRENDER_API double RRender_PrimitiveHide(double p, double v) {
