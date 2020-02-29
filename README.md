@@ -5,6 +5,15 @@
 Simple and fast 3D rendering engine for Game Maker. Written in OpenGL
 
 # Versions
+1.0.2
+- New function 'RRender_BillboardSetMeta'
+- New function 'RRender_BillboardGetMeta'
+- New function 'RRender_TerrainSetMeta'
+- New function 'RRender_TerrainGetMeta'
+- New function 'RRender_ModelSetMeta'
+- New function 'RRender_ModelGetMeta'
+- New function 'RRender_PrimitiveSetMeta'
+- New function 'RRender_PrimitiveGetMeta'
 1.0.1
 - New function 'RRender_CollisionBillboards'
 - New function 'RRender_CollisionModels'
