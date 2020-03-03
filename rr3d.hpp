@@ -27,6 +27,12 @@ RRENDER_API double RRender_VectorDot(double, double);
 RRENDER_API double RRender_VectorCross(double, double);
 RRENDER_API double RRender_VectorDelete(double);
 
+//* COLLISION SYSTEM *//
+RRENDER_API double RRender_CSCreate();
+RRENDER_API double RRender_CSAddCollider(double, double, double, double, double, double, double, double, double);
+RRENDER_API double RRender_CSRemoveCollider(double);
+RRENDER_API double RRender_CSGetColliderCount();
+
 //* COLLISION *//
 RRENDER_API double RRender_CollisionRayBillboards(double);
 RRENDER_API double RRender_CollisionRayModels(double);
