@@ -9,6 +9,7 @@
 #include "lodepng/lodepng.hpp"
 
 #include "rr3d.hpp"
+#include "rr3d_collider.hpp"
 #include "rr3d_camera.hpp"
 #include "rr3d_model.hpp"
 #include "rr3d_model_loader.hpp"
@@ -29,6 +30,9 @@ void** RR3D_screen_buffer = NULL;
 char* RR3D_screen_buffer_id = NULL;
 unsigned* RR3D_screen_buffer_pos = NULL;
 unsigned int RR3D_screen_buffer_cnt = 0;
+
+OBBCollider* RR3D_CS_collider_buffer = NULL;
+unsigned int RR3D_CS_collider_buffer_cnt = 0;
 
 //* NOT GM FUNCTIONS *//
 
@@ -200,6 +204,98 @@ RRENDER_API double RRender_VectorDelete(double p) {
 	free(v1);
 
 	return RR_SUCCESS;
+}
+
+//* COLLISION SYSTEM *//
+
+RRENDER_API double RRender_CSCreate() {
+
+	RR3D_CS_collider_buffer = (OBBCollider*)malloc(sizeof(OBBCollider));
+	RR3D_CS_collider_buffer_cnt = 0;
+
+	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_CSAddCollider(double x, double y, double z, double xr, double yr, double zr, double xs, double ys, double zs) {
+
+	RR3D_CS_collider_buffer_cnt += 1;
+	RR3D_CS_collider_buffer = (OBBCollider*)realloc(RR3D_CS_collider_buffer, sizeof(OBBCollider) * RR3D_CS_collider_buffer_cnt);
+
+	RR3D_CS_collider_buffer[RR3D_CS_collider_buffer_cnt - 1].pos = glm::vec3((float)x, (float)y, (float)z);
+	RR3D_CS_collider_buffer[RR3D_CS_collider_buffer_cnt - 1].rotation = glm::vec3((float)xr, (float)yr, (float)zr);
+	RR3D_CS_collider_buffer[RR3D_CS_collider_buffer_cnt - 1].scale = glm::vec3((float)xs, (float)ys, (float)zs);
+
+	float half_xs = xs / 2;
+	float half_ys = ys / 2;
+	float half_zs = zs / 2;
+	glm::vec4 p0 = glm::vec4(-half_xs, -half_ys, - half_zs, 1.0);
+	glm::vec4 p1 = glm::vec4(half_xs, -half_ys, -half_zs, 1.0);
+	glm::vec4 p2 = glm::vec4(-half_xs, -half_ys, half_zs, 1.0);
+	glm::vec4 p3 = glm::vec4(half_xs, -half_ys, half_zs, 1.0);
+	glm::vec4 p4 = glm::vec4(-half_xs, half_ys, -half_zs, 1.0);
+	glm::vec4 p5 = glm::vec4(half_xs, half_ys, -half_zs, 1.0);
+	glm::vec4 p6 = glm::vec4(-half_xs, half_ys, half_zs, 1.0);
+	glm::vec4 p7 = glm::vec4(half_xs, half_ys, half_zs, 1.0);
+
+	glm::mat4 M_rotateX = glm::rotate((float)xr, glm::vec3(1.0, 0.0, 0.0));
+	glm::mat4 M_rotateY = glm::rotate((float)yr, glm::vec3(0.0, 1.0, 0.0));
+	glm::mat4 M_rotateZ = glm::rotate((float)zr, glm::vec3(0.0, 0.0, 1.0));
+	glm::mat4 M_rotate = M_rotateX * M_rotateY * M_rotateZ;
+
+	p0 = M_rotate * p0; p1 = M_rotate * p1; p2 = M_rotate * p2; p3 = M_rotate * p3;
+	p4 = M_rotate * p4; p5 = M_rotate * p5; p6 = M_rotate * p6; p7 = M_rotate * p7;
+
+	float len_max = 0;
+	float len = sqrt(p0.x * p0.x + p0.y * p0.y + p0.z * p0.z);
+	if (len > len_max) { len_max = len; }
+	len = sqrt(p1.x * p1.x + p1.y * p1.y + p1.z * p1.z);
+	if (len > len_max) { len_max = len; }
+	len = sqrt(p2.x * p2.x + p2.y * p0.y + p2.z * p2.z);
+	if (len > len_max) { len_max = len; }
+	len = sqrt(p3.x * p3.x + p3.y * p3.y + p3.z * p3.z);
+	if (len > len_max) { len_max = len; }
+	len = sqrt(p4.x * p4.x + p4.y * p4.y + p4.z * p4.z);
+	if (len > len_max) { len_max = len; }
+	len = sqrt(p5.x * p5.x + p5.y * p5.y + p5.z * p5.z);
+	if (len > len_max) { len_max = len; }
+	len = sqrt(p6.x * p6.x + p6.y * p6.y + p6.z * p6.z);
+	if (len > len_max) { len_max = len; }
+	len = sqrt(p7.x * p7.x + p7.y * p7.y + p7.z * p7.z);
+	if (len > len_max) { len_max = len; }
+
+	RR3D_CS_collider_buffer[RR3D_CS_collider_buffer_cnt - 1].sphere_radius = len_max;
+
+	return RR3D_CS_collider_buffer_cnt - 1;
+}
+
+RRENDER_API double RRender_CSRemoveCollider(double index) {
+
+	if (RR3D_CS_collider_buffer_cnt == 0) {
+		return 0;
+	}
+
+	unsigned i = (unsigned)index;
+
+	// if not last
+	if (i != RR3D_CS_collider_buffer_cnt - 1) {
+		for (; i < RR3D_CS_collider_buffer_cnt - 1; ++i) {
+			RR3D_CS_collider_buffer[i] = RR3D_CS_collider_buffer[i + 1];
+			RR3D_CS_collider_buffer[i] = RR3D_CS_collider_buffer[i + 1];
+			RR3D_CS_collider_buffer[i] = RR3D_CS_collider_buffer[i + 1];
+		}
+	}
+
+	RR3D_CS_collider_buffer_cnt -= 1;
+
+	if (RR3D_CS_collider_buffer_cnt > 0) {
+		RR3D_CS_collider_buffer = (OBBCollider*)realloc(RR3D_CS_collider_buffer, sizeof(OBBCollider) * RR3D_CS_collider_buffer_cnt);
+	}
+
+	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_CSGetColliderCount() {
+	return (double)RR3D_CS_collider_buffer_cnt;
 }
 
 //* COLLISION *//
