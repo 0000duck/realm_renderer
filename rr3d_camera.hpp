@@ -20,6 +20,7 @@ public:
 	void addYaw(float);
 	void addRoll(float);
 	void setTranslation(float, float, float);
+	glm::vec3 getDirection();
 	float getPitch();
 	float getYaw();
 	float getRoll();
