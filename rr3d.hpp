@@ -29,8 +29,15 @@ RRENDER_API double RRender_VectorDelete(double);
 
 //* COLLISION SYSTEM *//
 RRENDER_API double RRender_CSCreate();
-RRENDER_API double RRender_CSAddCollider(double, double, double, double, double, double, double, double, double);
+RRENDER_API double RRender_CSAddCollider(double, double, double, double, double, double);
 RRENDER_API double RRender_CSRemoveCollider(double);
+RRENDER_API double RRender_CSSetCamera(double);
+RRENDER_API double RRender_CSSetRadius(double);
+RRENDER_API double RRender_CSSetGravity(double, double);
+RRENDER_API double RRender_CSMove(double);
+RRENDER_API double RRender_CSStrafe(double);
+RRENDER_API double RRender_CSLift(double);
+RRENDER_API double RRender_CSUpdate();
 RRENDER_API double RRender_CSGetColliderCount();
 
 //* COLLISION *//
