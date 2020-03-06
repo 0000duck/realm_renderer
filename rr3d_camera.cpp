@@ -39,8 +39,9 @@ float* Camera::getTranslationZ() {
 
 void Camera::setPitch(float v) {
 	pitch = v;
-	direction.y = cos(glm::radians(pitch)) - sin(glm::radians(pitch));
-	direction.z = sin(glm::radians(pitch)) + cos(glm::radians(pitch));
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 	
 	V = glm::lookAt(translation, translation + direction, up);
 	right = glm::vec3(direction.z, 0, -direction.x);
@@ -48,8 +49,9 @@ void Camera::setPitch(float v) {
 
 void Camera::setYaw(float v) {
 	yaw = v;
-	direction.x = cos(glm::radians(yaw)) - sin(glm::radians(yaw));
-	direction.z = sin(glm::radians(yaw)) + cos(glm::radians(yaw));
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 
 	V = glm::lookAt(translation, translation + direction, up);
 	right = glm::vec3(direction.z, 0, -direction.x);
@@ -76,6 +78,11 @@ void Camera::addPitch(float v) {
 
 void Camera::addYaw(float v) {
 	yaw += v;
+	if (yaw < -360) {
+		yaw = 360 + yaw;
+	} else if (yaw > 360) {
+		yaw = 360 - yaw;
+	}
 	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
 	direction.y = sin(glm::radians(pitch));
 	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -98,6 +105,10 @@ void Camera::setTranslation(float x, float y, float z) {
 	V = glm::lookAt(translation, translation + direction, up);
 }
 
+glm::vec3 Camera::getDirection() {
+	return direction;
+}
+
 float Camera::getPitch() {
 	return pitch;
 }
@@ -112,13 +123,16 @@ float Camera::getRoll() {
 
 void Camera::move(float v) {
 	translation += direction * glm::vec3(v);
+	V = glm::lookAt(translation, translation + direction, up);
 }
 
 void Camera::strafe(float v) {
-	glm::vec3 dir = glm::vec3(cos(glm::radians(yaw - 90)) * 1, 0, sin(glm::radians(yaw - 90) * 1));
+	glm::vec3 dir = glm::vec3(cos(glm::radians(yaw - 90)), 0, sin(glm::radians(yaw - 90)));
 	translation += dir * glm::vec3(v);
+	V = glm::lookAt(translation, translation + direction, up);
 }
 
 void Camera::lift(float v) {
 	translation += up * glm::vec3(v);
+	V = glm::lookAt(translation, translation + direction, up);
 }
