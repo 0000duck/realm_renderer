@@ -1,14 +1,21 @@
-# Realm Renderer v1.0.3
+# Realm Renderer v1.0.4
 3D Engine for Game Maker
 
 # Description
 Simple and fast 3D rendering engine for Game Maker. Written in OpenGL
 
 # Version
-1.0.3
+1.0.4
 - New function 'RRender_CSCreate'
 - New function 'RRender_CSAddCollider'
 - New function 'RRender_CSRemoveCollider'
+- New function 'RRender_CSSetCamera'
+- New function 'RRender_CSSetGravity'
+- New function 'RRender_CSSetRadius'
+- New function 'RRender_CSMove'
+- New function 'RRender_CSStrafe'
+- New function 'RRender_CSLift'
+- New function 'RRender_CSUpdate'
 - New function 'RRender_CSGetColliderCount'
 
 # Lodepng License
