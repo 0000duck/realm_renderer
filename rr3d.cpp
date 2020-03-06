@@ -31,10 +31,60 @@ char* RR3D_screen_buffer_id = NULL;
 unsigned* RR3D_screen_buffer_pos = NULL;
 unsigned int RR3D_screen_buffer_cnt = 0;
 
-OBBCollider* RR3D_CS_collider_buffer = NULL;
+Camera* RR3D_CS_collider_camera = NULL;
+AABBCollider* RR3D_CS_collider_buffer = NULL;
 unsigned int RR3D_CS_collider_buffer_cnt = 0;
+float RR3D_CS_collider_radius = 0;
+unsigned RR3D_CS_gravity = 0;
+float RR3D_CS_gravity_speed = 1;
 
 //* NOT GM FUNCTIONS *//
+
+unsigned clamp(signed v, unsigned min, unsigned max) {
+
+	if (v <= min) { return min; }
+	if (v >= max) { return max; }
+
+	return v;
+}
+
+unsigned collision_sphereaabb_y(glm::vec3 org, float org_radius, glm::vec3 pos, glm::vec3 scale, float aabb_radius) {
+
+	glm::vec3 translated_org = org - pos;
+	float to_length = sqrt(translated_org.x * translated_org.x + translated_org.y * translated_org.y + translated_org.z * translated_org.z);
+	if (to_length > aabb_radius + org_radius) {
+		return 0;
+	}
+
+	float half_y = scale.y / 2;
+
+	if (translated_org.y + org_radius < -half_y || translated_org.y - org_radius > half_y) {
+		return 0;
+	}
+
+	return 1;
+}
+
+unsigned collision_sphereaabb(glm::vec3 org, float org_radius, glm::vec3 pos, glm::vec3 scale, float aabb_radius) {
+
+	glm::vec3 translated_org = org - pos;
+	float to_length = sqrt(translated_org.x * translated_org.x + translated_org.y * translated_org.y + translated_org.z * translated_org.z);
+	if (to_length > aabb_radius + org_radius) {
+		return 0;
+	}
+
+	float half_x = scale.x / 2;
+	float half_y = scale.y / 2;
+	float half_z = scale.z / 2;
+
+	if (translated_org.x + org_radius < -half_x || translated_org.x - org_radius > half_x ||
+		translated_org.y + org_radius < -half_y || translated_org.y - org_radius > half_y ||
+		translated_org.z + org_radius < -half_z || translated_org.z - org_radius > half_z) {
+		return 0;
+	}
+
+	return 1;
+}
 
 unsigned collision_raytriangle(glm::vec3 org, glm::vec3 dir, glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, float* t) {
 
@@ -58,14 +108,6 @@ unsigned collision_raytriangle(glm::vec3 org, glm::vec3 dir, glm::vec3 p0, glm::
 	*t = glm::dot(p0p2, qvec) * invDet;
 	
 	return 1;
-}
-
-unsigned clamp(signed v, unsigned min, unsigned max) {
-
-	if (v <= min) { return min; }
-	if (v >= max) { return max; }
-
-	return v;
 }
 
 glm::vec3 calculate_normal(signed int* ybuffer, unsigned gc, unsigned gs, unsigned x, unsigned z) {
@@ -210,19 +252,18 @@ RRENDER_API double RRender_VectorDelete(double p) {
 
 RRENDER_API double RRender_CSCreate() {
 
-	RR3D_CS_collider_buffer = (OBBCollider*)malloc(sizeof(OBBCollider));
+	RR3D_CS_collider_buffer = (AABBCollider*)malloc(sizeof(AABBCollider));
 	RR3D_CS_collider_buffer_cnt = 0;
 
 	return RR_SUCCESS;
 }
 
-RRENDER_API double RRender_CSAddCollider(double x, double y, double z, double xr, double yr, double zr, double xs, double ys, double zs) {
+RRENDER_API double RRender_CSAddCollider(double x, double y, double z, double xs, double ys, double zs) {
 
 	RR3D_CS_collider_buffer_cnt += 1;
-	RR3D_CS_collider_buffer = (OBBCollider*)realloc(RR3D_CS_collider_buffer, sizeof(OBBCollider) * RR3D_CS_collider_buffer_cnt);
+	RR3D_CS_collider_buffer = (AABBCollider*)realloc(RR3D_CS_collider_buffer, sizeof(AABBCollider) * RR3D_CS_collider_buffer_cnt);
 
 	RR3D_CS_collider_buffer[RR3D_CS_collider_buffer_cnt - 1].pos = glm::vec3((float)x, (float)y, (float)z);
-	RR3D_CS_collider_buffer[RR3D_CS_collider_buffer_cnt - 1].rotation = glm::vec3((float)xr, (float)yr, (float)zr);
 	RR3D_CS_collider_buffer[RR3D_CS_collider_buffer_cnt - 1].scale = glm::vec3((float)xs, (float)ys, (float)zs);
 
 	float half_xs = xs / 2;
@@ -236,14 +277,6 @@ RRENDER_API double RRender_CSAddCollider(double x, double y, double z, double xr
 	glm::vec4 p5 = glm::vec4(half_xs, half_ys, -half_zs, 1.0);
 	glm::vec4 p6 = glm::vec4(-half_xs, half_ys, half_zs, 1.0);
 	glm::vec4 p7 = glm::vec4(half_xs, half_ys, half_zs, 1.0);
-
-	glm::mat4 M_rotateX = glm::rotate((float)xr, glm::vec3(1.0, 0.0, 0.0));
-	glm::mat4 M_rotateY = glm::rotate((float)yr, glm::vec3(0.0, 1.0, 0.0));
-	glm::mat4 M_rotateZ = glm::rotate((float)zr, glm::vec3(0.0, 0.0, 1.0));
-	glm::mat4 M_rotate = M_rotateX * M_rotateY * M_rotateZ;
-
-	p0 = M_rotate * p0; p1 = M_rotate * p1; p2 = M_rotate * p2; p3 = M_rotate * p3;
-	p4 = M_rotate * p4; p5 = M_rotate * p5; p6 = M_rotate * p6; p7 = M_rotate * p7;
 
 	float len_max = 0;
 	float len = sqrt(p0.x * p0.x + p0.y * p0.y + p0.z * p0.z);
@@ -288,9 +321,149 @@ RRENDER_API double RRender_CSRemoveCollider(double index) {
 	RR3D_CS_collider_buffer_cnt -= 1;
 
 	if (RR3D_CS_collider_buffer_cnt > 0) {
-		RR3D_CS_collider_buffer = (OBBCollider*)realloc(RR3D_CS_collider_buffer, sizeof(OBBCollider) * RR3D_CS_collider_buffer_cnt);
+		RR3D_CS_collider_buffer = (AABBCollider*)realloc(RR3D_CS_collider_buffer, sizeof(AABBCollider) * RR3D_CS_collider_buffer_cnt);
 	}
 
+	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_CSSetCamera(double cam) {
+
+	Camera* camera = (Camera*)(ULONG)cam;
+	RR3D_CS_collider_camera = camera;
+
+	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_CSSetRadius(double v) {
+
+	RR3D_CS_collider_radius = (float)v;
+
+	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_CSSetGravity(double g, double v) {
+
+	RR3D_CS_gravity = (unsigned)g;
+	RR3D_CS_gravity_speed = (float)v;
+
+	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_CSMove(double v) {
+
+	glm::vec3 pos = glm::vec3(*RR3D_CS_collider_camera->getTranslationX(), *RR3D_CS_collider_camera->getTranslationY(), *RR3D_CS_collider_camera->getTranslationZ());
+	float yaw = RR3D_CS_collider_camera->getYaw();
+	float dirx = cos(glm::radians(yaw)) * v;
+	float dirz = sin(glm::radians(yaw)) * v;
+	glm::vec3 posx = glm::vec3(dirx, 0, 0);
+	glm::vec3 posz = glm::vec3(0, 0, dirz);
+
+	unsigned addx, addz;
+	addx = addz = 0;
+
+	for (int i = 0; i < RR3D_CS_collider_buffer_cnt; ++i) {
+		if (collision_sphereaabb(pos + posx, RR3D_CS_collider_radius, RR3D_CS_collider_buffer[i].pos, RR3D_CS_collider_buffer[i].scale, RR3D_CS_collider_buffer[i].sphere_radius)) {
+			addx = 0;
+			break;
+		} else {
+			addx = 1;
+		}
+	}
+	for (int i = 0; i < RR3D_CS_collider_buffer_cnt; ++i) {
+		if (collision_sphereaabb(pos + posz, RR3D_CS_collider_radius, RR3D_CS_collider_buffer[i].pos, RR3D_CS_collider_buffer[i].scale, RR3D_CS_collider_buffer[i].sphere_radius)) {
+			addz = 0;
+			break;
+		} else {
+			addz = 1;
+		}
+	}
+
+	if (addx) { pos += posx; }
+	if (addz) { pos += posz; }
+
+	RR3D_CS_collider_camera->setTranslation(pos.x, pos.y, pos.z);
+
+	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_CSStrafe(double v) {
+
+	glm::vec3 pos = glm::vec3(*RR3D_CS_collider_camera->getTranslationX(), *RR3D_CS_collider_camera->getTranslationY(), *RR3D_CS_collider_camera->getTranslationZ());
+	float yaw = RR3D_CS_collider_camera->getYaw();
+	float dirx = cos(glm::radians(yaw - 90)) * v;
+	float dirz = sin(glm::radians(yaw - 90)) * v;
+	glm::vec3 posx = glm::vec3(dirx, 0, 0);
+	glm::vec3 posz = glm::vec3(0, 0, dirz);
+
+	unsigned addx, addz;
+	addx = addz = 0;
+
+	for (int i = 0; i < RR3D_CS_collider_buffer_cnt; ++i) {
+		if (collision_sphereaabb(pos + posx, RR3D_CS_collider_radius, RR3D_CS_collider_buffer[i].pos, RR3D_CS_collider_buffer[i].scale, RR3D_CS_collider_buffer[i].sphere_radius)) {
+			addx = 0;
+			break;
+		} else {
+			addx = 1;
+		}
+	}
+	for (int i = 0; i < RR3D_CS_collider_buffer_cnt; ++i) {
+		if (collision_sphereaabb(pos + posz, RR3D_CS_collider_radius, RR3D_CS_collider_buffer[i].pos, RR3D_CS_collider_buffer[i].scale, RR3D_CS_collider_buffer[i].sphere_radius)) {
+			addz = 0;
+			break;
+		} else {
+			addz = 1;
+		}
+	}
+
+	if (addx) { pos += posx; }
+	if (addz) { pos += posz; }
+
+	RR3D_CS_collider_camera->setTranslation(pos.x, pos.y, pos.z);
+
+	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_CSLift(double v) {
+
+	glm::vec3 pos = glm::vec3(*RR3D_CS_collider_camera->getTranslationX(), *RR3D_CS_collider_camera->getTranslationY(), *RR3D_CS_collider_camera->getTranslationZ());
+	glm::vec3 posy = glm::vec3(0, (float)v, 0);
+
+	unsigned addy = 1;
+
+	for (int i = 0; i < RR3D_CS_collider_buffer_cnt; ++i) {
+		if (collision_sphereaabb(pos + posy, RR3D_CS_collider_radius, RR3D_CS_collider_buffer[i].pos, RR3D_CS_collider_buffer[i].scale, RR3D_CS_collider_buffer[i].sphere_radius)) {
+			addy = 0;
+			break;
+		}
+	}
+
+	if (addy) { pos += posy; }
+
+	RR3D_CS_collider_camera->setTranslation(pos.x, pos.y, pos.z);
+
+	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_CSUpdate() {
+
+	if (RR3D_CS_gravity) {
+		glm::vec3 pos = glm::vec3(*RR3D_CS_collider_camera->getTranslationX(), *RR3D_CS_collider_camera->getTranslationY(), *RR3D_CS_collider_camera->getTranslationZ());
+		glm::vec3 posy = glm::vec3(0.0, -RR3D_CS_gravity_speed, 0.0);
+
+		unsigned addy = 1;
+
+		for (int i = 0; i < RR3D_CS_collider_buffer_cnt; ++i) {
+			if (collision_sphereaabb(pos + posy, RR3D_CS_collider_radius, RR3D_CS_collider_buffer[i].pos, RR3D_CS_collider_buffer[i].scale, RR3D_CS_collider_buffer[i].sphere_radius)) {
+				addy = 0;
+				break;
+			}
+		}
+
+		if (addy) { pos += posy; }
+
+		RR3D_CS_collider_camera->setTranslation(pos.x, pos.y, pos.z);
+	}
 	return RR_SUCCESS;
 }
 
