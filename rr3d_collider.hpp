@@ -3,11 +3,10 @@
 
 #include <glm.hpp>
 
-typedef struct OBBCollider_str {
+typedef struct AABBCollider_str {
 	glm::vec3 pos;
-	glm::vec3 rotation;
 	glm::vec3 scale;
 	float sphere_radius;
-} OBBCollider;
+} AABBCollider;
 
 #endif
