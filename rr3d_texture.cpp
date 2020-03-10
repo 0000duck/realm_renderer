@@ -4,9 +4,9 @@
 #include "lodepng/lodepng.hpp"
 #include "rr3d_texture.hpp"
 
-Texture::Texture(char* fn, double m, double p) {
-	width = 0;
-	height = 0;
+Texture::Texture(char* fn, double m, double p, unsigned w, unsigned h) {
+	width = w;
+	height = h;
 	pixels = 0;
 	hidden = 0;
 
