@@ -38,6 +38,8 @@ float RR3D_CS_collider_radius = 0;
 unsigned RR3D_CS_gravity = 0;
 float RR3D_CS_gravity_speed = 1;
 
+glm::vec3 RR3D_collision_point;
+
 //* NOT GM FUNCTIONS *//
 
 unsigned clamp(signed v, unsigned min, unsigned max) {
@@ -46,23 +48,6 @@ unsigned clamp(signed v, unsigned min, unsigned max) {
 	if (v >= max) { return max; }
 
 	return v;
-}
-
-unsigned collision_sphereaabb_y(glm::vec3 org, float org_radius, glm::vec3 pos, glm::vec3 scale, float aabb_radius) {
-
-	glm::vec3 translated_org = org - pos;
-	float to_length = sqrt(translated_org.x * translated_org.x + translated_org.y * translated_org.y + translated_org.z * translated_org.z);
-	if (to_length > aabb_radius + org_radius) {
-		return 0;
-	}
-
-	float half_y = scale.y / 2;
-
-	if (translated_org.y + org_radius < -half_y || translated_org.y - org_radius > half_y) {
-		return 0;
-	}
-
-	return 1;
 }
 
 unsigned collision_sphereaabb(glm::vec3 org, float org_radius, glm::vec3 pos, glm::vec3 scale, float aabb_radius) {
@@ -360,22 +345,18 @@ RRENDER_API double RRender_CSMove(double v) {
 	glm::vec3 posz = glm::vec3(0, 0, dirz);
 
 	unsigned addx, addz;
-	addx = addz = 0;
+	addx = addz = 1;
 
 	for (int i = 0; i < RR3D_CS_collider_buffer_cnt; ++i) {
 		if (collision_sphereaabb(pos + posx, RR3D_CS_collider_radius, RR3D_CS_collider_buffer[i].pos, RR3D_CS_collider_buffer[i].scale, RR3D_CS_collider_buffer[i].sphere_radius)) {
 			addx = 0;
 			break;
-		} else {
-			addx = 1;
 		}
 	}
 	for (int i = 0; i < RR3D_CS_collider_buffer_cnt; ++i) {
 		if (collision_sphereaabb(pos + posz, RR3D_CS_collider_radius, RR3D_CS_collider_buffer[i].pos, RR3D_CS_collider_buffer[i].scale, RR3D_CS_collider_buffer[i].sphere_radius)) {
 			addz = 0;
 			break;
-		} else {
-			addz = 1;
 		}
 	}
 
@@ -397,22 +378,18 @@ RRENDER_API double RRender_CSStrafe(double v) {
 	glm::vec3 posz = glm::vec3(0, 0, dirz);
 
 	unsigned addx, addz;
-	addx = addz = 0;
+	addx = addz = 1;
 
 	for (int i = 0; i < RR3D_CS_collider_buffer_cnt; ++i) {
 		if (collision_sphereaabb(pos + posx, RR3D_CS_collider_radius, RR3D_CS_collider_buffer[i].pos, RR3D_CS_collider_buffer[i].scale, RR3D_CS_collider_buffer[i].sphere_radius)) {
 			addx = 0;
 			break;
-		} else {
-			addx = 1;
 		}
 	}
 	for (int i = 0; i < RR3D_CS_collider_buffer_cnt; ++i) {
 		if (collision_sphereaabb(pos + posz, RR3D_CS_collider_radius, RR3D_CS_collider_buffer[i].pos, RR3D_CS_collider_buffer[i].scale, RR3D_CS_collider_buffer[i].sphere_radius)) {
 			addz = 0;
 			break;
-		} else {
-			addz = 1;
 		}
 	}
 
@@ -473,6 +450,82 @@ RRENDER_API double RRender_CSGetColliderCount() {
 
 //* COLLISION *//
 
+RRENDER_API double RRender_CollisionGetPosition(double v) {
+
+	char val = (char)v;
+	switch (val) {
+	case 0:
+		return (double)RR3D_collision_point.x;
+		break;
+	case 1:
+		return (double)RR3D_collision_point.y;
+		break;
+	case 2:
+		return (double)RR3D_collision_point.z;
+		break;
+	}
+
+	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_CollisionRayTerrain(double d, double cam) {
+
+	TerrainData* data = (TerrainData*)(ULONG)d;
+	Camera* camera = (Camera*)(ULONG)cam;
+
+	unsigned ptr = 0;
+	for (int zz = 0; zz < data->gc; ++zz) {
+		for (int xx = 0; xx < data->gc; ++xx) {
+			glm::vec3 p0 = glm::vec3(data->positions[ptr], data->positions[ptr + 1], data->positions[ptr + 2]);
+			ptr += 3;
+			glm::vec3 p1 = glm::vec3(data->positions[ptr], data->positions[ptr + 1], data->positions[ptr + 2]);
+			ptr += 3;
+			glm::vec3 p2 = glm::vec3(data->positions[ptr], data->positions[ptr + 1], data->positions[ptr + 2]);
+			glm::vec3 p3 = glm::vec3(data->positions[ptr + 3], data->positions[ptr + 4], data->positions[ptr + 5]);
+			
+			// collision detection
+			glm::vec3 org = glm::vec3(*camera->getTranslationX(), *camera->getTranslationY(), *camera->getTranslationZ());
+			glm::vec3 dir = glm::vec3(camera->getViewMatrix()[0][2], camera->getViewMatrix()[1][2], camera->getViewMatrix()[2][2]);
+			float t = 0;
+
+			if (collision_raytriangle(org, dir, p0, p1, p2, &t) ||
+				collision_raytriangle(org, dir, p1, p3, p2, &t)) {
+				RR3D_collision_point = glm::vec3(org.x + dir.x * t, org.y + dir.y * t, org.z + dir.z * t);
+				return (double)t;
+			}
+		}
+		ptr += 6;
+	}
+
+	glm::vec3 p0 = glm::vec3(data->gc * data->gs, 0.0, 0.0);
+	glm::vec3 p1 = glm::vec3(data->gc * data->gs + 9999.0, 0.0, 0.0);
+	glm::vec3 p2 = glm::vec3(0.0, 0.0, data->gc * data->gs + 9999.0);
+	glm::vec3 p3 = glm::vec3(data->gc * data->gs + 9999.0, 0.0, data->gc * data->gs + 9999.0);
+
+	glm::vec3 org = glm::vec3(*camera->getTranslationX(), *camera->getTranslationY(), *camera->getTranslationZ());
+	glm::vec3 dir = glm::vec3(camera->getViewMatrix()[0][2], camera->getViewMatrix()[1][2], camera->getViewMatrix()[2][2]);
+	float t = 0;
+
+	if (collision_raytriangle(org, dir, p0, p1, p2, &t) ||
+		collision_raytriangle(org, dir, p2, p1, p3, &t)) {
+		RR3D_collision_point = glm::vec3(org.x + dir.x * t, org.y + dir.y * t, org.z + dir.z * t);
+		return (double)t;
+	}
+
+	p0 = glm::vec3(0.0, 0.0, data->gc * data->gs);
+	p1 = glm::vec3(data->gc * data->gs + 9999.0, 0.0, data->gc * data->gs);
+	p2 = glm::vec3(data->gc * data->gs + 9999.0, 0.0, data->gc * data->gs + 9999.0);
+	p3 = glm::vec3(0.0, 0.0, data->gc * data->gs + 9999.0);
+
+	if (collision_raytriangle(org, dir, p0, p1, p2, &t) ||
+		collision_raytriangle(org, dir, p3, p0, p1, &t)) {
+		RR3D_collision_point = glm::vec3(org.x + dir.x * t, org.y + dir.y * t, org.z + dir.z * t);
+		return (double)t;
+	}
+
+	return 0;
+}
+
 RRENDER_API double RRender_CollisionRayBillboards(double cam) {
 
 	Camera* camera = (Camera*)(ULONG)cam;
@@ -509,9 +562,11 @@ RRENDER_API double RRender_CollisionRayBillboards(double cam) {
 			float t = 0;
 
 			if (collision_raytriangle(org, dir, buffer[0].pos, buffer[1].pos, buffer[2].pos, &t)) {
+				RR3D_collision_point = glm::vec3(org.x + dir.x * t, org.y + dir.y * t, org.z + dir.z * t);
 				return (double)(ULONG)billboard;
 			}
 			if (collision_raytriangle(org, dir, buffer[1].pos, buffer[3].pos, buffer[2].pos, &t)) {
+				RR3D_collision_point = glm::vec3(org.x + dir.x * t, org.y + dir.y * t, org.z + dir.z * t);
 				return (double)(ULONG)billboard;
 			}
 			
@@ -556,6 +611,7 @@ RRENDER_API double RRender_CollisionRayModels(double cam) {
 				float t = 0;
 
 				if (collision_raytriangle(org, dir, p0, p1, p2, &t)) {
+					RR3D_collision_point = glm::vec3(org.x + dir.x * t, org.y + dir.y * t, org.z + dir.z * t);
 					return (double)(ULONG)model;
 				}
 
@@ -911,9 +967,11 @@ RRENDER_API double RRender_TextDelete(double d) {
 
 //* TEXTURE *//
 
-RRENDER_API double RRender_TextureCreate(char* fn, double p, double m) {
+RRENDER_API double RRender_TextureCreate(char* fn, double p, double wh, double m) {
 
-	Texture* texture = new Texture(fn, m, p);
+	unsigned w = (unsigned)wh >> 32;
+	unsigned h = (unsigned)wh & 0xffffffff;
+	Texture* texture = new Texture(fn, m, p, (unsigned)w, (unsigned)h);
 
 	return (double)(ULONG)texture;
 }
@@ -1240,6 +1298,8 @@ RRENDER_API double RRender_TerrainDataAddY(double d, double x, double y, double 
 
 	unsigned gx = x / data->gs;
 	unsigned gy = y / data->gs;
+	gx = clamp(gx, 0, data->gc);
+	gy = clamp(gy, 0, data->gc);
 
 	if (gy == 0) {
 		unsigned ptr = (gx * 24) + 12;
@@ -2393,8 +2453,8 @@ RRENDER_API double RRender_WindowInit(double handle, double w, double h, double 
 	GLuint framebuffer;
 	glGenFramebuffers(1, &framebuffer);
 
-	Texture* texture_col = new Texture(NULL, 0, 0);
-	Texture* texture_depth = new Texture(NULL, 0, 0);
+	Texture* texture_col = new Texture(NULL, 0, 0, width, height);
+	Texture* texture_depth = new Texture(NULL, 0, 0, width, height);
 	
 	glBindTexture(GL_TEXTURE_2D, texture_col->getTexture());
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -2408,7 +2468,7 @@ RRENDER_API double RRender_WindowInit(double handle, double w, double h, double 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// screen texture
-	Texture* texture_screen = new Texture(NULL, 0, 0);
+	Texture* texture_screen = new Texture(NULL, 0, 0, width, height);
 	glBindTexture(GL_TEXTURE_2D, texture_screen->getTexture());
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glBindTexture(GL_TEXTURE_2D, 0);
