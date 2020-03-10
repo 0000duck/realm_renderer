@@ -41,6 +41,8 @@ RRENDER_API double RRender_CSUpdate();
 RRENDER_API double RRender_CSGetColliderCount();
 
 //* COLLISION *//
+RRENDER_API double RRender_CollisionGetPosition(double);
+RRENDER_API double RRender_CollisionRayTerrain(double, double);
 RRENDER_API double RRender_CollisionRayBillboards(double);
 RRENDER_API double RRender_CollisionRayModels(double);
 
@@ -85,7 +87,7 @@ RRENDER_API double RRender_TextHide(double, double);
 RRENDER_API double RRender_TextDelete(double);
 
 //* TEXTURE *//
-RRENDER_API double RRender_TextureCreate(char* fn, double, double);
+RRENDER_API double RRender_TextureCreate(char* fn, double, double, double);
 RRENDER_API double RRender_TextureHide(double, double);
 RRENDER_API double RRender_TextureSetRegion(double, double, double, double);
 RRENDER_API double RRender_TextureGetWidth(double);
