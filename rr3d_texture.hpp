@@ -5,7 +5,7 @@
 
 class Texture {
 public:
-	Texture(char*, double, double);
+	Texture(char*, double, double, unsigned, unsigned);
 	~Texture();
 	unsigned getHidden();
 	GLuint getTexture();
