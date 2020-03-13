@@ -243,6 +243,62 @@ RRENDER_API double RRender_CSCreate() {
 	return RR_SUCCESS;
 }
 
+RRENDER_API double RRender_CSSetPosition(double i, double x, double y, double z) {
+	
+	unsigned id = (unsigned)i;
+	RR3D_CS_collider_buffer[id].pos = glm::vec3((float)x, (float)y, (double)z);
+
+	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_CSSetScale(double i, double xs, double ys, double zs) {
+
+	unsigned id = (unsigned)i;
+	RR3D_CS_collider_buffer[id].scale = glm::vec3((float)xs, (float)ys, (double)zs);
+
+	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_CSGetPosition(double i, double v) {
+	
+	unsigned id = (unsigned)i;
+	char val = (char)v;
+
+	switch (val) {
+		case 0:
+			return RR3D_CS_collider_buffer[id].pos.x;
+		break;
+		case 1:
+			return RR3D_CS_collider_buffer[id].pos.y;
+		break;
+		case 2:
+			return RR3D_CS_collider_buffer[id].pos.z;
+		break;
+	}
+
+	return RR_SUCCESS;
+}
+
+RRENDER_API double RRender_CSGetScale(double i, double v) {
+
+	unsigned id = (unsigned)i;
+	char val = (char)v;
+
+	switch (val) {
+	case 0:
+		return RR3D_CS_collider_buffer[id].scale.x;
+		break;
+	case 1:
+		return RR3D_CS_collider_buffer[id].scale.y;
+		break;
+	case 2:
+		return RR3D_CS_collider_buffer[id].scale.z;
+		break;
+	}
+
+	return RR_SUCCESS;
+}
+
 RRENDER_API double RRender_CSAddCollider(double x, double y, double z, double xs, double ys, double zs) {
 
 	RR3D_CS_collider_buffer_cnt += 1;
