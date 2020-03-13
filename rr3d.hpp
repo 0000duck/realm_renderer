@@ -29,6 +29,10 @@ RRENDER_API double RRender_VectorDelete(double);
 
 //* COLLISION SYSTEM *//
 RRENDER_API double RRender_CSCreate();
+RRENDER_API double RRender_CSSetPosition(double, double, double, double);
+RRENDER_API double RRender_CSSetScale(double, double, double, double);
+RRENDER_API double RRender_CSGetPosition(double, double);
+RRENDER_API double RRender_CSGetScale(double, double);
 RRENDER_API double RRender_CSAddCollider(double, double, double, double, double, double);
 RRENDER_API double RRender_CSRemoveCollider(double);
 RRENDER_API double RRender_CSSetCamera(double);
